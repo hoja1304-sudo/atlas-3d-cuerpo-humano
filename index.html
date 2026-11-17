@@ -538,6 +538,11 @@ async function main(){
       const v = layerValues[layerForSystem(k)] / 100;
       m.opacity = v; m.transparent = v < .999; m.depthWrite = v >= .999; m.needsUpdate = true;
     });
+    const skinOpacity = layerValues.skin / 100;
+    meshes.filter(m => m.userData.skinDetail).forEach(m => {
+      m.material.opacity = skinOpacity; m.material.transparent = skinOpacity < .999;
+      m.material.depthWrite = skinOpacity >= .999; m.material.needsUpdate = true;
+    });
     document.querySelectorAll("[data-layer]").forEach(input => { input.value = layerValues[input.dataset.layer]; input.nextElementSibling.value = layerValues[input.dataset.layer] + "%"; });
     dirty = true;
   }
@@ -593,6 +598,27 @@ async function main(){
       if (keys[p.s] === "piel") m.renderOrder = 10;
       scene.add(m); meshes.push(m); box.union(g.boundingBox);
       if (i % 60 === 0){ $("bar").firstElementChild.style.width = (i/atlas.parts.length*100)+"%"; $("lmsg").textContent = "Cargando "+atlas.parts.length+" estructuras"; await tick(); }
+    }
+    if (s === "f"){
+      const skinSys = keys.indexOf("piel");
+      const addVulvaPart = (name, scale, position, rotation = 0, material = mats[skinSys], skinDetail = false) => {
+        const g = new THREE.SphereGeometry(1, 24, 16);
+        g.scale(scale[0], scale[1], scale[2]);
+        g.rotateZ(rotation);
+        g.translate(position[0], position[1], position[2]);
+        g.computeVertexNormals(); g.computeBoundingSphere(); g.computeBoundingBox();
+        const m = new THREE.Mesh(g, material);
+        m.userData = {i:meshes.length, name, sys:skinSys, hidden:false, key:norm(name), b:false, skinDetail};
+        m.renderOrder = skinDetail ? 11 : 10;
+        if (skinDetail) m.raycast = () => {};
+        scene.add(m); meshes.push(m); box.union(g.boundingBox);
+      };
+      // Reconstrucción externa simplificada: superficie vulvar continua y hendidura central.
+      // Se mantiene retraída para evitar una silueta masculina o piezas sobresalientes.
+      addVulvaPart("Vulva (anatomía externa)", [.082, .108, .016], [0, .75, -.088]);
+      const grooveMat = new THREE.MeshStandardMaterial({color:0x9b6268, roughness:.72, metalness:0, side:THREE.DoubleSide});
+      mats.push(grooveMat);
+      addVulvaPart("Hendidura vulvar", [.005, .032, .003], [0, .705, -.068], 0, grooveMat, true);
     }
     H = box.max.y - box.min.y;
     home = {t:box.getCenter(new THREE.Vector3()), r:H*(innerWidth < 760 ? 2.45 : 2.05), th:0.5, ph:1.42};
