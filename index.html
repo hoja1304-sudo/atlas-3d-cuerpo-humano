@@ -22,6 +22,8 @@
   #side header{padding:12px 14px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
   #side h1{font-size:1.02rem;margin:0;line-height:1.2}
   #side small{color:var(--muted)}
+  .author-signature{display:block;margin-top:3px;font-size:.68rem;letter-spacing:.015em}
+  .author-signature strong{color:#dce7f0;font-weight:650}
   #body{overflow:auto;padding:0 12px 12px}
   #q{width:100%;padding:10px 11px;border-radius:9px;border:1px solid var(--line);background:rgba(0,0,0,.3);color:var(--ink);font:inherit}
   #q[aria-expanded="true"]{border-color:rgba(255,210,74,.5);border-radius:9px 9px 5px 5px}
@@ -87,6 +89,9 @@
   #hint{color:var(--muted);text-align:center;margin:0}
   #load{inset:0;display:grid;place-items:center;background:var(--bg);z-index:5}
   #load div{width:min(320px,80vw);text-align:center}
+  #load .load-author{display:flex;width:auto;align-items:center;justify-content:center;gap:6px;margin-top:7px;color:var(--muted);font-size:.72rem;letter-spacing:.025em}
+  #load .load-author::before{content:"";width:18px;height:2px;border-radius:9px;background:var(--acc)}
+  #load .load-author strong{color:#dce7f0;font-weight:650}
   #bar{height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:10px}
   #bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}
   #credit{right:10px;bottom:8px;font-size:.7rem;color:var(--muted);max-width:260px;text-align:right}
@@ -188,12 +193,12 @@
 <canvas id="c"></canvas>
 <div id="labelsLayer" aria-hidden="true"></div>
 
-<div id="load" class="ui"><div><b>Preparando el atlas…</b><div id="bar"><i></i></div><p id="lmsg" style="color:var(--muted);font-size:.9rem"></p></div></div>
+<div id="load" class="ui"><div><b>Preparando el atlas…</b><small class="load-author">Creado por: <strong>Alberto Jiménez Ruiz</strong></small><div id="bar"><i></i></div><p id="lmsg" style="color:var(--muted);font-size:.9rem"></p></div></div>
 
 <button id="menu" class="ui card" aria-label="Abrir panel de sistemas"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg> Sistemas</button>
 
 <aside id="side" class="ui card">
-  <header><div><h1>Atlas 3D del cuerpo humano</h1><small id="count"></small></div></header>
+  <header><div><h1>Atlas 3D del cuerpo humano</h1><small class="author-signature">Creado por: <strong>Alberto Jiménez Ruiz</strong></small><small id="count"></small></div></header>
   <div id="body">
     <h2 style="margin-top:2px">Cuerpo</h2>
     <div class="row" id="sex" role="group" aria-label="Seleccionar cuerpo"><button data-sex="m" class="on">Hombre</button><button data-sex="f">Mujer</button></div>
