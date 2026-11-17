@@ -376,7 +376,7 @@ async function main(){
   let dirty = true, spin = false;
   const NOTE = {
     m:"Modelo masculino (BodyParts3D). Esqueleto y músculos completos; no incluye pulmones.",
-    f:"Atlas femenino v2.0. Piel, esqueleto completo, músculos y órganos comparten la misma pose anatómica."};
+    f:"Atlas femenino v2.0. El sistema reproductor se mantiene oculto en la vista general y puede estudiarse desde Sistemas principales."};
   const ORGANS = {
     heart:{title:"Corazón completo", system:"corazon", description:"Bombea la sangre a través del cuerpo. La vista reúne cavidades, paredes, válvulas y vasos principales.", context:["corazon","arterias","venas"]},
     brain:{title:"Cerebro y encéfalo", system:"nervioso", description:"Centro de control del sistema nervioso. Procesa la información, coordina el movimiento y sostiene funciones vitales.", context:["nervioso","arterias","venas"]},
@@ -447,7 +447,7 @@ async function main(){
     {title:"Venas cardíacas", text:"Recogen la sangre utilizada por el propio músculo del corazón.", rx:/vena cardiaca|cardiac vein/}
   ];
   const layerValues = {skin:55, muscles:100, bones:100, arteries:100, veins:100, organs:100};
-  const defaults = () => keys.map(k => k !== "embarazo" && (k !== "piel" || sex === "f"));
+  const defaults = () => keys.map(k => k !== "embarazo" && !(sex === "f" && k === "reproductor") && (k !== "piel" || sex === "f"));
 
   function organMeshes(id){
     const o = ORGANS[id]; if (!o || (id === "lungs" && sex === "m")) return [];
