@@ -436,7 +436,7 @@ async function main(){
       location:"Los riñones se ubican en la región posterior del abdomen; las vías urinarias descienden hacia la pelvis.",
       parts:"Riñones, uréteres, vejiga urinaria y uretra."},
     reproductive:{title:s => "Sistema reproductor " + (s === "f" ? "femenino" : "masculino"), keys:["reproductor"], primary:"reproductor", color:0xb879a7,
-      description:s => s === "f" ? "Explora ovarios, trompas uterinas, útero, cérvix y vagina; después observa la vulva externa y las estructuras de sostén." : "Produce espermatozoides y hormonas, y conduce el semen hacia el exterior.",
+      description:s => s === "f" ? "Produce ovocitos y hormonas, permite la fecundación y puede albergar un embarazo. La vagina comunica el cérvix con el exterior." : "Produce espermatozoides y hormonas, y conduce el semen hacia el exterior.",
       location:s => s === "f" ? "Los órganos internos se encuentran en la pelvis. La vagina comunica el cérvix con la vulva, que es la anatomía externa." : "Comprende órganos de la pelvis y los genitales externos.",
       parts:s => s === "f" ? "Útero; trompas y fimbrias; ovarios; cérvix y vagina; labios mayores y menores, vestíbulo y aberturas externas; ligamentos de sostén." : "Testículos, conductos deferentes, vesículas seminales, próstata, pene y uretra.",
       fact:"En la ampolla de la trompa suele ocurrir la fecundación. Este modelo distingue varias porciones de las trompas, aunque no muestra sus capas microscópicas."}
@@ -472,7 +472,7 @@ async function main(){
     uterus:{title:"Útero", description:"Observa el fondo, el cuerpo, los cuernos y las paredes uterinas.", fact:"El endometrio y la cavidad uterina no están segmentados por separado en esta malla.", color:0xd77d7b},
     tubes:{title:"Trompas uterinas", description:"Sigue el istmo, la ampolla, el infundíbulo y las fimbrias desde el útero hacia cada ovario.", fact:"Las fimbrias ayudan a captar el ovocito. El orificio abdominal comunica la trompa con la cavidad peritoneal.", color:0xe8a37d},
     ovaries:{title:"Ovarios", description:"Son las gónadas que producen óvulos y hormonas.", fact:"Cada ovario está próximo al extremo lateral de una trompa uterina.", color:0xe2bd6e},
-    cervix:{title:"Cérvix y vagina", description:"Observa el cuello uterino, sus orificios interno y externo, la unión cervicovaginal y la vagina.", fact:"La vagina es el conducto interno; la vulva corresponde a las estructuras visibles por fuera.", color:0xbe8ac2},
+    cervix:{title:"Cérvix y vagina", description:"Observa el cuello uterino y el conducto vaginal abierto para apreciar sus paredes y pliegues internos.", fact:"Las paredes vaginales suelen estar en contacto. La abertura del modelo es un corte didáctico para observar el interior.", color:0xbe8ac2},
     external:{title:"Vulva externa", description:"Observa labios mayores, labios menores, vestíbulo, capuchón del clítoris y aberturas uretral y vaginal.", fact:"La vulva es externa. Sus formas varían entre personas; esta representación es una simplificación educativa original.", color:0xd9a292},
     support:{title:"Ligamentos y relaciones", description:"Los ligamentos y pliegues peritoneales ayudan a sostener y relacionar los órganos pélvicos.", fact:"Algunas mallas de soporte se superponen a las superficies de los órganos; puedes aislar cada región para verla con claridad.", color:0x82b9ad}
   };
@@ -516,7 +516,7 @@ async function main(){
     {title:"Infundíbulos y fimbrias", text:"En los extremos laterales, las fimbrias ayudan a captar el ovocito liberado por el ovario.", region:"tubes", rx:/infundibulo|fimbrias|orificio abdominal/},
     {title:"Ovarios", text:"Compara el ovario derecho y el izquierdo y su posición lateral respecto al útero.", region:"ovaries"},
     {title:"Cérvix y orificios", text:"El canal cervical se abre hacia el útero por el orificio interno y hacia la vagina por el externo.", region:"cervix", rx:/cervicovaginal|uterine cervix|orificio interno|orificio externo/},
-    {title:"Vagina", text:"Sigue el conducto vaginal interno desde el cérvix hacia la vulva externa.", region:"cervix", rx:/^vagina$/},
+    {title:"Vagina", text:"Sigue el conducto muscular inclinado desde el cérvix hacia la abertura externa y observa sus pliegues.", region:"cervix", rx:/^vagina$|mucosa vaginal/},
     {title:"Vulva externa", text:"Distingue los labios mayores y menores, el vestíbulo y las aberturas externas.", region:"external"},
     {title:"Ligamentos", text:"Finalmente estudia los pliegues y ligamentos que sostienen y relacionan estos órganos.", region:"support"}
   ];
@@ -596,6 +596,13 @@ async function main(){
     });
     if (id === "reproductive") go({th:0, ph:Math.PI/2});
     $("side").classList.remove("open");
+  }
+  async function openVaginalStudy(){
+    if (sex !== "f") await build("f");
+    await openMainSystem("reproductive");
+    setReproView("cervix");
+    setDetailView(true);
+    focusMany(detailMeshes);
   }
 
   function layerForSystem(k){
@@ -724,6 +731,66 @@ async function main(){
     add("Glande del clítoris", oval(0,.7726,.001,.001,.0034,.0002), materials.inner);
   }
 
+  // Conducto vaginal abierto por delante para mostrar la luz y los pliegues.
+  // Es una pieza didáctica propia; el conducto normal está colapsado en reposo.
+  function addVaginalCanal(){
+    const systemIndex = keys.indexOf("reproductor");
+    const start = Math.PI*.75, span = Math.PI*1.5, rows = 96, columns = 48;
+    const outerMat = new THREE.MeshStandardMaterial({color:0xc77e85, roughness:.68, side:THREE.DoubleSide});
+    const liningMat = new THREE.MeshStandardMaterial({color:0x9e5868, roughness:.76, side:THREE.DoubleSide});
+    mats.push(outerMat, liningMat);
+    const center = t => ({x:-.012+.002*Math.sin(Math.PI*t), y:.744+.063*t, z:-.032-.039*t});
+    const radii = t => ({
+      x:.0085+.0075*t+.002*Math.sin(Math.PI*t),
+      z:.0055+.003*t+.001*Math.sin(Math.PI*t)
+    });
+    const point = (t, angle, inside, rim=0) => {
+      const c=center(t), r=radii(t);
+      const fold = inside ? .00045*Math.pow(Math.sin(Math.PI*t),.7)*Math.sin(16*Math.PI*t) : 0;
+      const scale = inside ? .76 : 1;
+      const fraction = rim || scale;
+      return [c.x+(r.x*fraction+fold)*Math.cos(angle),c.y,c.z+(r.z*fraction+fold*.6)*Math.sin(angle)];
+    };
+    const surface = inside => {
+      const positions=[], indices=[];
+      for (let row=0;row<=rows;row++){
+        const t=row/rows;
+        for (let col=0;col<=columns;col++){
+          positions.push(...point(t,start+span*col/columns,inside));
+          if (row<rows && col<columns){
+            const a=row*(columns+1)+col, b=a+columns+1;
+            indices.push(a,b,a+1,a+1,b,b+1);
+          }
+        }
+      }
+      if (!inside){
+        for (const angle of [start,start+span]){
+          const offset=positions.length/3, across=4;
+          for (let row=0;row<=rows;row++){
+            const t=row/rows;
+            for (let col=0;col<=across;col++){
+              positions.push(...point(t,angle,false,.76+.24*col/across));
+              if (row<rows && col<across){
+                const a=offset+row*(across+1)+col, b=a+across+1;
+                indices.push(a,b,a+1,a+1,b,b+1);
+              }
+            }
+          }
+        }
+      }
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals(); geometry.computeBoundingSphere(); geometry.computeBoundingBox();
+      return geometry;
+    };
+    for (const [name,geometry,material] of [["Vagina",surface(false),outerMat],["Mucosa vaginal y pliegues",surface(true),liningMat]]){
+      const mesh=new THREE.Mesh(geometry,material);
+      mesh.userData={i:meshes.length,name,sys:systemIndex,hidden:false,key:norm(name),reproRegion:"cervix",vaginalDetail:true,baseMaterial:material};
+      scene.add(mesh); meshes.push(mesh);
+    }
+  }
+
   async function build(s){
     $("load").hidden = false; $("bar").firstElementChild.style.width = "0%"; $("lmsg").textContent = "Descomprimiendo modelos";
     await tick();
@@ -742,6 +809,7 @@ async function main(){
       const p = atlas.parts[i];
       const q = new Uint16Array(buf, off, p.v*3); off += p.v*6;
       const idx = new Uint16Array(buf, off, p.t*3); off += p.t*6;
+      if (s === "f" && p.n === "Vagina") continue;
       const pos = new Float32Array(p.v*3);
       for (let j = 0; j < pos.length; j++){ const a = j%3; pos[j] = p.lo[a] + q[j]/65535*p.sz[a]; }
       let renderIdx = idx;
@@ -762,7 +830,7 @@ async function main(){
       scene.add(m); meshes.push(m); box.union(g.boundingBox);
       if (i % 60 === 0){ $("bar").firstElementChild.style.width = (i/atlas.parts.length*100)+"%"; $("lmsg").textContent = "Cargando "+atlas.parts.length+" estructuras"; await tick(); }
     }
-    if (s === "f") addVulvaMeshes();
+    if (s === "f"){ addVulvaMeshes(); addVaginalCanal(); }
     H = box.max.y - box.min.y;
     home = {t:box.getCenter(new THREE.Vector3()), r:H*(innerWidth < 760 ? 2.45 : 2.05), th:0.5, ph:1.42};
     Object.assign(cam, {r:home.r, th:home.th, ph:home.ph}); cam.t.copy(home.t);
@@ -940,9 +1008,9 @@ async function main(){
     if (isolated) isolated = m;
     const k = keys[m.userData.sys];
     sysOn[m.userData.sys] = true;
-    m.userData.hidden = false; m.material = hi;
+    m.userData.hidden = false; m.material = detailMode && m.userData.reproRegion ? m.userData.baseMaterial : hi;
     $("name").textContent = m.userData.name; $("sname").textContent = m.userData.skinDetail ? "Reproductor femenino" : SYS[k][0];
-    $("sdesc").textContent = m.userData.skinDetail ? structureFunction(m,k) : SYS[k][2] + (m.userData.b ? " Pieza adaptada del modelo masculino." : "");
+    $("sdesc").textContent = m.userData.skinDetail || (sex === "f" && k === "reproductor") ? structureFunction(m,k) : SYS[k][2] + (m.userData.b ? " Pieza adaptada del modelo masculino." : "");
     $("sdot").style.background = "#" + (m.userData.skinDetail ? REPRO_REGIONS.external.color : SYS[k][1]).toString(16).padStart(6, "0");
     refresh(); if (focus) focusOn(m);
   }
@@ -995,6 +1063,7 @@ async function main(){
       if (n.startsWith("istmo")) return "Forma el tramo estrecho de la trompa próximo al útero.";
       if (n.startsWith("infundibulo") || n.startsWith("fimbrias") || n.startsWith("orificio abdominal")) return "Forma parte del extremo lateral de la trompa que recibe el ovocito.";
       if (n === "vagina") return "Conducto interno que comunica el cérvix con la vulva; participa en la menstruación y el parto.";
+      if (n.includes("mucosa vaginal")) return "Revestimiento con pliegues que contribuyen a la elasticidad del conducto vaginal.";
       if (/cervicovaginal|uterine cervix|orificio (interno|externo) del cuello/.test(n)) return "Conecta el cuerpo uterino con la vagina y contiene el canal cervical.";
       if (/ligamento|mesosalpinx|mesovarium|mesovario|pouch/.test(n)) return "Contribuye a la posición y las relaciones de los órganos pélvicos.";
       return "Forma parte del útero, el órgano muscular donde puede desarrollarse un embarazo.";
@@ -1041,7 +1110,7 @@ async function main(){
       document.querySelectorAll("[data-repro-view]").forEach(b => { const on = b.dataset.reproView === step.region; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
     }
     detailMeshes = group; detailSet = new Set(group); detailContext = false; detailContextSet = new Set([...contextMeshes(), ...group]);
-    select(lead, false); if (lead.userData.skinDetail) lead.material = lead.userData.baseMaterial;
+    select(lead, false); if (lead.userData.reproRegion) lead.material = lead.userData.baseMaterial;
     $("detailTitle").textContent = (detailBase?.tourKind === "reproductive" ? "Sistema reproductor · " : "Corazón · ") + step.title; $("detailDesc").textContent = step.text;
     $("detailMeta").textContent = group.length + (group.length === 1 ? " estructura en este paso" : " estructuras en este paso");
     $("detailOnly").classList.add("on"); $("detailContext").classList.remove("on");
@@ -1057,7 +1126,7 @@ async function main(){
     applyLayers();
     detailContextSet = new Set([...contextMeshes(), ...group]);
     const lead = group[0], region = REPRO_REGIONS[view];
-    select(lead, false); if (lead.userData.skinDetail) lead.material = lead.userData.baseMaterial;
+    select(lead, false); if (lead.userData.reproRegion) lead.material = lead.userData.baseMaterial;
     $("detailTitle").textContent = view === "all" ? detailBase.title : region.title;
     $("detailDesc").textContent = view === "all" ? detailBase.description : region.description;
     $("detailMeta").textContent = group.length + (group.length === 1 ? " estructura visible" : " estructuras visibles");
@@ -1078,6 +1147,7 @@ async function main(){
     detailContextSet = new Set([...contextMeshes(), ...detailMeshes]);
     const lead = selected && detailSet.has(selected) ? selected : group[0];
     if (selected !== lead) select(lead, false);
+    if (lead.userData.reproRegion) lead.material = lead.userData.baseMaterial;
     const k = keys[detailSystem], title = options.title || lead.userData.name;
     $("detailTitle").textContent = title;
     $("detailDesc").textContent = options.description || SYS[k][2];
@@ -1237,6 +1307,9 @@ async function main(){
   function renderSearch(){
     const t = norm($("q").value.trim()), results = $("res"); results.innerHTML = "";
     if (t.length < 2){ $("q").setAttribute("aria-expanded", "false"); return; }
+    if (t.includes("vagin")) appendSearchResult("Vagina con útero y cérvix", "Vista 3D del conducto vaginal en contexto", openVaginalStudy, true);
+    else if (t.includes("reproductor") && (t.includes("femen") || t.includes("sistema")))
+      appendSearchResult("Sistema reproductor femenino", "Vista completa · abrir modelo femenino", async () => { if (sex !== "f") await build("f"); await openMainSystem("reproductive"); }, true);
     const organId = matchedOrgan(t);
     if (organId){
       const count = organMeshes(organId).length, switchModel = organId === "lungs" && sex === "m";
@@ -1244,7 +1317,10 @@ async function main(){
     }
     meshes.filter(m => m.userData.key.includes(t) || norm(m.userData.name).includes(t)).sort((a, b) => Math.max(0, norm(a.userData.name).indexOf(t)) - Math.max(0, norm(b.userData.name).indexOf(t)) || a.userData.name.localeCompare(b.userData.name, "es")).slice(0, 24).forEach(m => {
       const k = keys[m.userData.sys];
-      appendSearchResult(m.userData.name, SYS[k][0] + " · estructura", () => { select(m, false); showDetail([m]); $("side").classList.remove("open"); });
+      appendSearchResult(m.userData.name, SYS[k][0] + " · estructura", () => {
+        if (m.userData.vaginalDetail){ openVaginalStudy(); return; }
+        select(m, false); showDetail([m]); $("side").classList.remove("open");
+      });
     });
     if (!results.children.length){ const li = document.createElement("li"); li.className = "search-empty"; li.textContent = "No se encontraron estructuras con ese nombre."; results.append(li); }
     $("q").setAttribute("aria-expanded", String(!!results.querySelector("button")));
